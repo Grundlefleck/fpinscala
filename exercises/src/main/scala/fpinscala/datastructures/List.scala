@@ -88,21 +88,64 @@ object List { // `List` companion object. Contains functions for creating and wo
     }
   }
 
-  def length[A](l: List[A]): Int = sys.error("todo")
+  def length[A](l: List[A]): Int = foldRight(l, 0)((_: A, len: Int) => len + 1)
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = sys.error("todo")
+  @annotation.tailrec
+  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
+    l match {
+      case Nil => z
+      case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
+    }
+  }
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = sys.error("todo")
+  def sumFoldLeft(ints: List[Int]): Int = foldLeft(ints, 0)(_ + _)
+  def productFoldLeft(l: List[Double]): Double = foldLeft(l, 1.0)(_ * _)
+  def lengthFoldLeft[A](l: List[A]): Int = foldLeft(l, 0)((acc, _) => acc + 1)
+
+  def reverse[A](l: List[A]): List[A] = foldLeft(l, List[A]())((acc: List[A], elem: A) => Cons(elem, acc))
+
+
+  def addOne(l: List[Int]): List[Int] = {
+    map(l)(_ + 1)
+  }
+
+  def doubleToString(l: List[Double]): List[String] = map(l)(_.toString)
+
+  def map[A,B](l: List[A])(f: A => B): List[B] = foldRight(l, List[B]())((elem, acc) => Cons(f(elem), acc))
+
+  def filter[A](l: List[A])(predicate: A => Boolean): List[A] = flatMap(l)((elem) => if (predicate(elem)) Cons(elem, Nil) else Nil)
+
+  def filterOdd(l: List[Int]): List[Int] = filter[Int](l)(_ % 2 == 0)
+
+  def flatMap[A, B](l: List[A])(f: A => List[B]): List[B] = foldRight(l, Nil: List[B])((elem, acc) => append(f(elem), acc))
+
+  def addPairWise(first: List[Int], second: List[Int]): List[Int] = zipWith(first, second)(_ + _)
+
+  def zipWith[A](first: List[A], second: List[A])(f: (A, A) => A): List[A] = (first, second) match {
+    case (_, Nil) => Nil
+    case (Nil, _) => Nil
+    case (Cons(h1, t1), Cons(h2, t2)) => Cons(f(h1, h2), zipWith(t1, t2)(f))
+  }
+
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = (sup, sub) match {
+    case (Nil, Nil) => true
+    case (_, Nil) => true
+    case (Nil, _) => false
+    case (Cons(supHead, supTail), Cons(subHead, subTail)) if supHead == subHead => hasSubsequence(supTail, subTail)
+    case (Cons(supHead, supTail), Cons(subHead, subTail)) => hasSubsequence(supTail, sub)
+  }
 }
 
 object Run {
 
   def main(args: Array[String]): Unit = {
-    println(List.init(List(1, 2, 3)))
-    println(List.init(List(3, 4, 5)))
-    println(List.init(List[Int]()))
-    println(List.init(List[Int]()))
-    println(List.init(List(1)))
-    println(List.init(List(1, 2, 3, 4, 5)))
+    println(List.hasSubsequence(List(1, 2, 3), List(4, 5, 6)))
+    println(List.hasSubsequence(List(3, 4, 5), List(3, 4)))
+    println(List.hasSubsequence(List(3, 4, 5), List(4, 5)))
+    println(List.hasSubsequence(List(3, 4, 5), List(4)))
+    println(List.hasSubsequence(List(3, 4, 5), List(4, 6)))
+    println(List.hasSubsequence(List(), List()))
+    println(List.hasSubsequence(List(1), List()))
+    println(List.hasSubsequence(List(), List(1)))
   }
 }
